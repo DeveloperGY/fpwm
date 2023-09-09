@@ -127,7 +127,7 @@ impl WM {
 
                 match e.get_type() {
                     KeyPress => {
-                        if e.key.subwindow != 0 {
+                        if e.key.keycode == XK_Escape && e.key.subwindow != 0 {
                             break;
                         }
                     },
@@ -147,7 +147,7 @@ impl WM {
     fn grab_input(&self, display: *mut Display, window: u64) {
         unsafe {
 
-            let escape = match self.string_to_keycode(display, "Esc") {
+            let escape = match self.string_to_keycode(display, "Escape") {
                 Some(c) => c as i32,
                 None => panic!("Failed to grab input, invalid key string")
             };
