@@ -116,7 +116,7 @@ impl WM {
     pub fn run(&self) {
         unsafe {
         
-            // self.init();
+            self.init();
 
             let mut e: XEvent = std::mem::zeroed();
 
