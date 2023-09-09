@@ -117,7 +117,6 @@ impl WM {
         unsafe {
         
             self.init();
-
             let mut e: XEvent = std::mem::zeroed();
 
             loop {
@@ -125,12 +124,12 @@ impl WM {
 
                 match e.get_type() {
                     KeyPress => {
-                        if e.key.keycode == XK_Escape && e.key.subwindow == 0 {
+                        if e.key.keycode == XK_Q && e.key.subwindow == 0 {
                             break;
                         }
                     },
                     _ => ()
-                }
+                };
             }
         
             self.clean();
@@ -157,7 +156,7 @@ impl WM {
                 escape,
                 Mod1Mask, 
                 window, 
-                1, 
+                0, 
                 GrabModeAsync,
                 GrabModeAsync
             );
