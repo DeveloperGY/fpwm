@@ -7,8 +7,6 @@ use x11::keysym::*;
 /// would prevent fpwm from becoming the current window manager
 static mut CAN_ASCEND: bool = true;
 
-const MOD_KEY: u32 = Mod1Mask;
-
 
 /// The core of fpwm. It represents an X11 Window manger.
 pub struct WM {
@@ -127,7 +125,7 @@ impl WM {
 
                 match e.get_type() {
                     KeyPress => {
-                        if e.key.keycode == XK_Escape && e.key.subwindow != 0 {
+                        if e.key.keycode == XK_Escape && e.key.subwindow == 0 {
                             break;
                         }
                     },
@@ -135,6 +133,8 @@ impl WM {
                 }
             }
         
+            self.clean();
+
         }
     }
 
@@ -155,7 +155,7 @@ impl WM {
             XGrabKey(
                 display,
                 escape,
-                MOD_KEY, 
+                Mod1Mask, 
                 window, 
                 1, 
                 GrabModeAsync,
@@ -182,6 +182,17 @@ impl WM {
             else {
                 Some(key_code)
             }
+        
+        }
+    }
+}
+
+/// Functions used for cleaning up the window manager
+impl WM {
+    fn clean(&self) {
+        unsafe {
+
+            XCloseDisplay(self.display);
         
         }
     }
