@@ -152,7 +152,7 @@ impl WM {
                 None => panic!("Failed to grab input, invalid key string")
             };
 
-            XGrabKey(
+            let result = XGrabKey(
                 display,
                 escape,
                 Mod1Mask, 
@@ -161,6 +161,10 @@ impl WM {
                 GrabModeAsync,
                 GrabModeAsync
             );
+
+            if result != GrabSuccess {
+                panic!("GRAB FAILED");
+            }
 
         }
     }
