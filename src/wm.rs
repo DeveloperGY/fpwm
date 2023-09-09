@@ -147,7 +147,7 @@ impl WM {
     fn grab_input(&self, display: *mut Display, window: u64) {
         unsafe {
 
-            let escape = match self.string_to_keycode(display, "Escape") {
+            let escape = match self.string_to_keycode(display, "a") {
                 Some(c) => c as i32,
                 None => panic!("Failed to grab input, invalid key string")
             };
