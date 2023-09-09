@@ -1,10 +1,14 @@
 use x11::xlib::*;
+use x11::keysym::*;
 
-/// The use of static state is required due to how xlib is implemented
+/// The use of global state is required due to how xlib is implemented
 
 /// Represents whether or not there is another window manager running, which
 /// would prevent fpwm from becoming the current window manager
 static mut CAN_ASCEND: bool = true;
+
+const MOD_KEY: u32 = Mod1Mask;
+
 
 /// The core of fpwm. It represents an X11 Window manger.
 pub struct WM {
@@ -26,6 +30,7 @@ impl WM {
 
     }
 
+    /// Creates the window manager and ascends it
     pub fn create() -> Self {
 
         let display = match WM::connect() {
@@ -40,8 +45,6 @@ impl WM {
             Err(e) => panic!("{}", e)
         };
 
-
-
         wm
 
     }
@@ -51,8 +54,8 @@ impl WM {
 impl WM {
     /// Creates a connection to the X server
     fn connect() -> Result<*mut Display, &'static str> {
-
         unsafe {
+
             let display = XOpenDisplay(std::ptr::null());
 
             if display.is_null() {
@@ -61,14 +64,14 @@ impl WM {
             else {
                 Ok(display)
             }
+        
         }
-
     }
 
     /// Verify that there is no other window manager currently in use
     fn verify_wm_ascension(&self) -> Result<(), &'static str> {
-
         unsafe {
+
             XSetErrorHandler(Some(WM::handle_wm_ascension_error));
             XSelectInput(
                 self.display,
@@ -84,8 +87,8 @@ impl WM {
             else {
                 Err("Failed to ascend, another window manager is running")
             }
+        
         }
-
     }
 
     /// Error Handler for if there is another window manager in use
@@ -95,8 +98,8 @@ impl WM {
         e: *mut XErrorEvent
     
     ) -> i32 {
-
         unsafe {
+
             match (*e).error_code {
                 BadAccess => {
                     CAN_ASCEND = false;
@@ -105,26 +108,81 @@ impl WM {
             };
 
             0
+        
         }
-
     }
 }
 
 /// Handlers for the execution of the window manager
 impl WM {
     pub fn run(&self) {
-
         unsafe {
+        
+            self.init();
+
             let mut e: XEvent = std::mem::zeroed();
 
             loop {
                 XNextEvent(self.display, &mut e);
 
                 match e.get_type() {
+                    KeyPress => {
+                        if e.key.subwindow != 0 {
+                            break;
+                        }
+                    },
                     _ => ()
                 }
             }
+        
         }
+    }
 
+    /// Prepares the window manager to be run
+    /// - Grabs input for the window manager
+    fn init(&self) {
+        self.grab_input(self.display, self.root);
+    }
+
+    fn grab_input(&self, display: *mut Display, window: u64) {
+        unsafe {
+
+            let escape = match self.string_to_keycode(display, "Escape") {
+                Some(c) => c as i32,
+                None => panic!("Failed to grab input, invalid key string")
+            };
+
+            XGrabKey(
+                display,
+                escape,
+                MOD_KEY, 
+                window, 
+                1, 
+                GrabModeAsync,
+                GrabModeAsync
+            );
+
+        }
+    }
+
+    fn string_to_keycode(&self, display: *mut Display, key: &str) -> Option<KeyCode> {
+        unsafe {
+
+            let key_sym = XStringToKeysym(key.as_ptr() as *const i8);
+
+            if key_sym == NoSymbol as u64{
+                return None;
+            }
+
+            let key_code = XKeysymToKeycode(display, key_sym);
+
+            if key_code == 0 {
+                None
+            }
+            else {
+                Some(key_code)
+            }
+        
+        }
     }
 }
