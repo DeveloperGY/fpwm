@@ -131,6 +131,7 @@ impl WM {
                         }
                         else if key == XK_d as u64 && e.key.subwindow == 0 {
                             let mut rofi = std::process::Command::new("rofi");
+                            rofi.args(["-show", "window"]);
                             rofi.spawn().unwrap();
                         }
                     },
