@@ -124,7 +124,9 @@ impl WM {
 
                 match e.get_type() {
                     KeyPress => {
-                        if e.key.keycode == XK_Q && e.key.subwindow == 0 {
+                        let key = XLookupKeysym(&mut e.key, 0);
+
+                        if key == XK_Q as u64 && e.key.subwindow == 0 {
                             break;
                         }
                     },
@@ -190,6 +192,18 @@ impl WM {
 impl WM {
     fn clean(&self) {
         unsafe {
+
+            let escape = match self.string_to_keycode(self.display, "Escape\0") {
+                Some(c) => c as i32,
+                None => panic!("Failed to grab input, invalid key string")
+            };
+
+            XUngrabKey(
+                self.display,
+                escape,
+                Mod1Mask,
+                self.root
+            );
 
             XCloseDisplay(self.display);
         
