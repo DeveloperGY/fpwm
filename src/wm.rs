@@ -126,7 +126,7 @@ impl WM {
                     KeyPress => {
                         let key = XLookupKeysym(&mut e.key, 0);
 
-                        if key == XK_Q as u64 && e.key.subwindow == 0 {
+                        if key == XK_Escape as u64 && e.key.subwindow == 0 {
                             break;
                         }
                     },
