@@ -146,24 +146,20 @@ impl WM {
     fn grab_input(&self, display: *mut Display, window: u64) {
         unsafe {
 
-            let escape = match self.string_to_keycode(display, "a") {
+            let escape = match self.string_to_keycode(display, "Escape\0") {
                 Some(c) => c as i32,
                 None => panic!("Failed to grab input, invalid key string")
             };
 
-            let result = XGrabKey(
+            XGrabKey(
                 display,
                 escape,
                 Mod1Mask, 
                 window, 
-                0, 
+                1, 
                 GrabModeAsync,
                 GrabModeAsync
             );
-
-            if result != GrabSuccess {
-                panic!("GRAB FAILED");
-            }
 
         }
     }
@@ -171,9 +167,9 @@ impl WM {
     fn string_to_keycode(&self, display: *mut Display, key: &str) -> Option<KeyCode> {
         unsafe {
 
-            let key_sym = XStringToKeysym(key.as_ptr() as *const i8);
+            let key_sym = XStringToKeysym(key.as_ptr() as *mut i8);
 
-            if key_sym == NoSymbol as u64{
+            if key_sym == NoSymbol as u64 {
                 return None;
             }
 
