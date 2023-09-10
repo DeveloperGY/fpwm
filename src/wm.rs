@@ -129,6 +129,10 @@ impl WM {
                         if key == XK_Escape as u64 && e.key.subwindow == 0 {
                             break;
                         }
+                        else if key == XK_d as u64 && e.key.subwindow == 0 {
+                            let mut rofi = std::process::Command::new("rofi");
+                            rofi.spawn().unwrap();
+                        }
                     },
                     _ => ()
                 };
@@ -145,7 +149,7 @@ impl WM {
         self.grab_input(self.display, self.root);
     }
 
-    fn grab_input(&self, display: *mut Display, window: u64) {
+    fn grab_input(&self, display: *mut Display, window: u64) { // TODO: Clean this up
         unsafe {
 
             let escape = match self.string_to_keycode(display, "Escape\0") {
@@ -163,6 +167,20 @@ impl WM {
                 GrabModeAsync
             );
 
+            let d = match self.string_to_keycode(display, "d\0") {
+                Some(c) => c as i32,
+                None => panic!("Failed to grab input, invalid key string")
+            };
+
+            XGrabKey(
+                display,
+                d,
+                Mod1Mask, 
+                window, 
+                1, 
+                GrabModeAsync,
+                GrabModeAsync
+            );
         }
     }
 
