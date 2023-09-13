@@ -3,13 +3,11 @@ use x11::keysym::*;
 use super::fpwm;
 
 
-
 /// Used to detect if there is another window manager already running
 static mut CAN_ASCEND: bool = true;
 
 /// Used to determine whether or not the window manager should be running
 static mut RUNNING: bool = true;
-
 
 
 /// Creates the window manager
