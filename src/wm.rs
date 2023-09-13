@@ -51,6 +51,11 @@ pub fn run_window_manager(display: *mut Display) {
                     handle_key_press(display, &e.key);
 
                 }
+                ConfigureRequest => {
+
+                    handle_configure_request(display, &e.configure_request);
+
+                }
                 MapRequest => {
 
                     handle_map_request(display, &e.map_request);
@@ -265,6 +270,24 @@ fn handle_key_press(display: *mut Display, e: &XKeyEvent) {
             _ => ()
 
         };
+
+    }
+}
+
+fn handle_configure_request(display: *mut Display, e: &XConfigureRequestEvent) {
+    unsafe {
+
+        let mut changes = XWindowChanges {
+            x: e.x,
+            y: e.y,
+            width: e.width,
+            height: e.height,
+            border_width: e.border_width,
+            sibling: 0,
+            stack_mode: Above
+        };
+
+        XConfigureWindow(display, e.window, e.value_mask as u32, &mut changes);
 
     }
 }
