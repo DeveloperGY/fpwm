@@ -1,4 +1,5 @@
 use x11::xlib::*;
+use x11::keysym::*;
 use super::fpwm;
 
 
@@ -47,7 +48,12 @@ pub fn run_window_manager(display: *mut Display) {
                 
                 KeyPress => {
 
-                    handle_key_press(&e.key);
+                    handle_key_press(display, &e.key);
+
+                }
+                MapRequest => {
+
+                    handle_map_request(display, &e.map_request);
 
                 }
                 _ => ()
@@ -152,6 +158,8 @@ fn grab_wm_keys(
     // Grab Alt + Escape
     grab_key(display, window, "Escape", Mod1Mask)?;
 
+    grab_key(display, window, "d", Mod1Mask)?;
+
     Ok(())
 
 }
@@ -214,7 +222,7 @@ fn keystr_to_keycode(
     }
 }
 
-// This takes a rust string and appends a null terminator character
+/// This takes a rust string and appends a null terminator character
 fn str_to_cstring(str: &str) -> String {
     
     let mut c_string = str.to_string();
@@ -229,10 +237,43 @@ fn str_to_cstring(str: &str) -> String {
 
 }
 
-pub fn handle_key_press(_e: &XKeyEvent) {
+/// Handles keypress events
+fn handle_key_press(display: *mut Display, e: &XKeyEvent) {
     unsafe {
 
-        RUNNING = false;
+        let keysym = XKeycodeToKeysym(display, e.keycode as u8, 0);
+
+        #[allow(non_upper_case_globals)]
+        match keysym as u32 {
+
+            XK_Escape => {
+
+                RUNNING = false;
+            
+            }
+
+            XK_d => {
+
+                // open rofi
+
+                let mut rofi = std::process::Command::new("rofi");
+                rofi.args(["-show", "window"]);
+                rofi.spawn().unwrap();
+
+            }
+
+            _ => ()
+
+        };
 
     }
+}
+
+/// Handles window map requests
+fn handle_map_request(display: *mut Display, e: &XMapRequestEvent) {
+    unsafe {
+
+        XMapWindow(display, e.window);
+
+    } 
 }
