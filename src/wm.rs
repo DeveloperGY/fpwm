@@ -294,7 +294,29 @@ fn handle_configure_request(display: *mut Display, e: &XConfigureRequestEvent) {
 fn handle_map_request(display: *mut Display, e: &XMapRequestEvent) {
     unsafe {
 
+        frame_window(display, e.window);
         XMapWindow(display, e.window);
 
     } 
+}
+
+/// Frames the specified window
+fn frame_window(display: *mut Display, window: Window) {
+    unsafe {
+
+        let frame = XCreateSimpleWindow(
+            display,
+            XDefaultRootWindow(display),
+            0,
+            0,
+            1080,
+            720,
+            0,
+            0,
+            0x161616
+        );
+
+        XReparentWindow(display, window, frame, 0, 0);
+
+    }
 }
