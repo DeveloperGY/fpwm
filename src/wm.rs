@@ -294,14 +294,15 @@ fn handle_configure_request(display: *mut Display, e: &XConfigureRequestEvent) {
 fn handle_map_request(display: *mut Display, e: &XMapRequestEvent) {
     unsafe {
 
-        frame_window(display, e.window);
+        let frame = frame_window(display, e.window);
         XMapWindow(display, e.window);
+        XMapWindow(display, frame);
 
     } 
 }
 
 /// Frames the specified window
-fn frame_window(display: *mut Display, window: Window) {
+fn frame_window(display: *mut Display, window: Window) -> Window {
     unsafe {
 
         let frame = XCreateSimpleWindow(
@@ -317,6 +318,8 @@ fn frame_window(display: *mut Display, window: Window) {
         );
 
         XReparentWindow(display, window, frame, 0, 0);
+
+        frame
 
     }
 }
