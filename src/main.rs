@@ -16,17 +16,13 @@
 // or if $XDG_CONFIG_DIRS isn't set
 // /etc/fpwm.conf
 
-mod fpwm;
 mod wm;
 
 use wm::*;
 
 fn main() {
 
-    let display = create_window_manager().unwrap();
-
-    configure_window_manager(display).unwrap();
-
-    run_window_manager(display);
+    let wm = WM::create().unwrap();
+    wm.run();
 
 }
