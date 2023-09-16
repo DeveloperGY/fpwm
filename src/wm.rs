@@ -89,8 +89,9 @@ impl WM {
                     running?"
                 )
             }
-
-            Err("failed ascension")
+            else {
+                Ok(())
+            }
 
         }
     }
