@@ -235,6 +235,11 @@ impl WM {
                     }
 
                 }
+                XK_Escape => {
+
+                    if e.state & Mod1Mask == Mod1Mask {RUNNING = false;}
+
+                }
                 _ => ()
 
             };
