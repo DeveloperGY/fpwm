@@ -236,7 +236,7 @@ impl WM {
                     if e.state & Mod1Mask == Mod1Mask {
 
                         let mut rofi = std::process::Command::new("rofi");
-                        rofi.args(["-show", "window"]);
+                        rofi.args(["-modi", "drun,run", "-show", "drun"]);
                         rofi.spawn().unwrap();
 
                     }
