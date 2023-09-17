@@ -137,6 +137,7 @@ impl WM {
     fn grab_keys(&self) {
 
         self.grab_key(self.root, "d", Mod1Mask);
+        self.grab_key(self.root, "Escape", Mod1Mask);
 
     }
 
