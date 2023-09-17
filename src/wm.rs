@@ -1,5 +1,8 @@
+mod app_window;
+
 use x11::xlib::*;
 use x11::keysym::*;
+use app_window::AppWindow;
 
 
 /// The basic Error type of fpwm
@@ -15,7 +18,9 @@ pub static mut RUNNING: bool = true;
 pub struct WM {
     display: *mut Display,
     root: Window,
-    currently_open: Option<Window>
+    
+    current_workspace: usize,
+    currently_open: Option<AppWindow>
 }
 
 impl WM {
@@ -36,6 +41,8 @@ impl WM {
         let wm = Self {
             display,
             root,
+            
+            current_workspace: 1,
             currently_open: None
         };
 
@@ -267,8 +274,8 @@ impl WM {
             let mut changes = XWindowChanges {
                 x: 0,
                 y: 0,
-                width: 1080,
-                height: 720,
+                width: 1280,
+                height: 800,
                 border_width: 0,
                 sibling: 0,
                 stack_mode: Above
@@ -287,10 +294,6 @@ impl WM {
                 } as u32,
                 &mut changes
             );
-
-            // (
-            //        
-            //  ) as u32,
         
         }
     }
@@ -299,10 +302,10 @@ impl WM {
         unsafe {
 
             if let Some(w) = self.currently_open {
-                XUnmapWindow(self.display, w);    
+                XUnmapWindow(self.display, w.window);    
             }
             XMapWindow(self.display, e.window);
-            self.currently_open = Some(e.window);
+            self.currently_open = Some(AppWindow::new(e.window, self.current_workspace));
 
         }
     }
