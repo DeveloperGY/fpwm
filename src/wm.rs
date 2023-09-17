@@ -275,13 +275,20 @@ impl WM {
             XConfigureWindow(
                 e.display,
                 e.window,
-                0,
+                {
+                    CWX | 
+                    CWY |
+                    CWWidth |
+                    CWHeight |
+                    CWBorderWidth |
+                    CWSibling |
+                    CWStackMode
+                } as u32,
                 &mut changes
             );
 
             // (
-            //        CWX | CWY | CWWidth | CWHeight | CWBorderWidth | CWSibling
-            //      | CWStackMode
+            //        
             //  ) as u32,
         
         }
