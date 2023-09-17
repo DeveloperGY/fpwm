@@ -14,7 +14,8 @@ pub static mut RUNNING: bool = true;
 
 pub struct WM {
     display: *mut Display,
-    root: Window
+    root: Window,
+    currently_open: Option<Window>
 }
 
 impl WM {
@@ -296,6 +297,9 @@ impl WM {
     fn handle_map_request(&self, e: &XMapRequestEvent) {
         unsafe {
 
+            if let Some(w) = self.currently_open {
+                XUnmapWindow(self.display, self.currently_open.unwrap());    
+            }
             XMapWindow(self.display, e.window);
 
         }
