@@ -276,12 +276,11 @@ impl WM {
                 e.display,
                 e.window,
                 {
-                    CWX | 
+                    CWX |
                     CWY |
                     CWWidth |
                     CWHeight |
                     CWBorderWidth |
-                    CWSibling |
                     CWStackMode
                 } as u32,
                 &mut changes
