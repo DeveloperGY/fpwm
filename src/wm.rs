@@ -194,6 +194,7 @@ impl WM {
 
                 XNextEvent(self.display, &mut e);
 
+                #[allow(non_upper_case_globals)]
                 match e.get_type() {
 
                     KeyPress => self.handle_keypress(&e.key),
@@ -214,7 +215,14 @@ impl WM {
     fn handle_keypress(&self, e: &XKeyEvent) {
         unsafe {
 
-            match XKeycodeToKeysym(self.display, e.keycode as u8, 0) {
+            let keysym = XKeycodeToKeysym(
+                self.display,
+                e.keycode as u8,
+                0
+            ) as u32;
+
+            #[allow(non_upper_case_globals)]
+            match keysym {
 
                 XK_d => {
 
