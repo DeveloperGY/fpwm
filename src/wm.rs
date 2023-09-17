@@ -204,7 +204,7 @@ impl WM {
 
                         self.handle_configure_request(&e.configure);
                     
-                    }
+                    },
                     _ => ()
 
                 };
@@ -275,13 +275,15 @@ impl WM {
             XConfigureWindow(
                 e.display,
                 e.window,
-                {
-                    CWX | CWY | CWWidth | CWHeight | CWBorderWidth | CWSibling
-                    | CWStackMode
-                } as u32,
+                0,
                 &mut changes
             );
 
+            // (
+            //        CWX | CWY | CWWidth | CWHeight | CWBorderWidth | CWSibling
+            //      | CWStackMode
+            //  ) as u32,
+        
         }
     }
 
