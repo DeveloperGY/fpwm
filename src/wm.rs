@@ -108,7 +108,7 @@ impl WM {
                 
                 XStringListToTextProperty(
                     &mut wm_name,
-                    self.root as i32,
+                    1,
                     &mut text_property
                 );
 
