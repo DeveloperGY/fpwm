@@ -3,6 +3,7 @@ mod app_window;
 use x11::xlib::*;
 use x11::keysym::*;
 use app_window::AppWindow;
+use std::collections::HashMap;
 
 
 /// The basic Error type of fpwm
@@ -20,7 +21,8 @@ pub struct WM {
     root: Window,
     
     current_workspace: usize,
-    currently_open: Option<AppWindow>
+    windows: HashMap<Window, AppWindow>,
+    workspaces: HashMap<usize, Vec<Window>>
 }
 
 impl WM {
@@ -43,7 +45,8 @@ impl WM {
             root,
             
             current_workspace: 1,
-            currently_open: None
+            windows: HashMap::new(),
+            workspaces: HashMap::new()
         };
 
         Ok(wm)
@@ -147,6 +150,8 @@ impl WM {
 
         self.grab_key(self.root, "d", Mod1Mask);
         self.grab_key(self.root, "Escape", Mod1Mask);
+        self.grab_key(self.root, "1", Mod1Mask);
+        self.grab_key(self.root, "2", Mod1Mask);
 
     }
 
@@ -208,6 +213,12 @@ impl WM {
                 match e.get_type() {
 
                     KeyPress => self.handle_keypress(&e.key),
+                    CreateNotify => self.handle_create_notify(&e.create_window),
+                    DestroyNotify => {
+
+                        self.handle_destroy_notify(&e.destroy_window);
+
+                    },
                     MapRequest => self.handle_map_request(&e.map_request),
                     ConfigureRequest => {
 
@@ -228,7 +239,7 @@ impl WM {
 // Handle Key Presses
 impl WM {
 
-    fn handle_keypress(&self, e: &XKeyEvent) {
+    fn handle_keypress(&mut self, e: &XKeyEvent) {
         unsafe {
 
             let keysym = XKeycodeToKeysym(
@@ -256,6 +267,54 @@ impl WM {
                     if e.state & Mod1Mask == Mod1Mask {RUNNING = false;}
 
                 },
+                XK_1 => {
+
+                    if e.state &Mod1Mask == Mod1Mask {
+
+                        self.current_workspace = 1;
+
+                        // turn into function call
+                        self.windows.iter_mut().for_each(|w| {
+
+                            if w.1.workspace_id == self.current_workspace {
+
+                                XMapWindow(self.display, w.1.window);
+
+                            }
+                            else {
+
+                                XUnmapWindow(self.display, w.1.window);
+
+                            }
+
+                        });
+
+                    }
+
+                }
+                XK_2 => {
+
+                    if e.state &Mod1Mask == Mod1Mask {
+
+                        self.current_workspace = 2;
+                        self.windows.iter_mut().for_each(|w| {
+
+                            if w.1.workspace_id == self.current_workspace {
+
+                                XMapWindow(self.display, w.1.window);
+
+                            }
+                            else {
+
+                                XUnmapWindow(self.display, w.1.window);
+
+                            }
+
+                        });
+
+                    }
+
+                }
                 _ => ()
 
             };
@@ -267,6 +326,39 @@ impl WM {
 
 // Window creation, destruction, and configuration
 impl WM {
+
+    fn handle_create_notify(&mut self, e: &XCreateWindowEvent) {
+        
+        self.windows.insert(
+            e.window,
+            AppWindow::new(e.window, self.current_workspace)
+        );
+
+        if !self.workspaces.contains_key(&self.current_workspace) {
+
+            self.workspaces.insert(self.current_workspace, vec![]);
+
+        }
+
+        // self.workspaces.get_mut(&self.current_workspace)
+        //     .unwrap()
+        //     .push(e.window);
+
+    }
+
+    fn handle_destroy_notify(&mut self, e: &XDestroyWindowEvent) {
+
+        self.windows.remove(&e.window);
+        
+        if !self.workspaces.contains_key(&self.current_workspace) {
+
+            self.workspaces.insert(self.current_workspace, vec![]);
+
+        }
+
+        // remove window from workspace vec
+
+    }
 
     fn handle_configure_request(&self, e: &XConfigureEvent) {
         unsafe {
@@ -301,11 +393,7 @@ impl WM {
     fn handle_map_request(&mut self, e: &XMapRequestEvent) {
         unsafe {
 
-            if let Some(w) = self.currently_open {
-                XUnmapWindow(self.display, w.window);    
-            }
             XMapWindow(self.display, e.window);
-            self.currently_open = Some(AppWindow::new(e.window, self.current_workspace));
 
         }
     }
