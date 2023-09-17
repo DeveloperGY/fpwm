@@ -102,6 +102,11 @@ impl WM {
                 )
             }
             else {
+                XStoreName(
+                    self.display,
+                    self.root,
+                    "fpwm\0".as_ptr() as *const i8
+                );
                 Ok(())
             }
 
