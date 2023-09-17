@@ -14,10 +14,6 @@ Fpwm is programmed in a loose OOP paradigm. The reason for this is that due to
 how the Xlib library is written fpwm requires global state which does not fit
 into a strictly OOP format.
 
-### Columns
-To keep things consistant, all code must fit within 80 character columns. This
-includes comments as well.
-
 ### Name Scheme
 Names should follow the standard guidelines set in place by Cargo. Of course,
 you cant control external crates so if the external crate goes against the
