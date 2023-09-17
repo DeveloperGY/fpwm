@@ -102,23 +102,20 @@ impl WM {
                 )
             }
             else {
-                XChangeProperty(
+
+                let mut wm_name = "fpwm\0".as_ptr() as *mut i8;
+                let mut text_property = std::mem::zeroed();
+                
+                XStringListToTextProperty(
+                    &mut wm_name,
+                    self.root as i32,
+                    &mut text_property
+                );
+
+                XSetWMName(
                     self.display,
                     self.root,
-                    XInternAtom(
-                        self.display,
-                        "_NET_WM_NAME\0".as_ptr() as *const i8,
-                        0
-                    ),
-                    XInternAtom(
-                        self.display, 
-                        "UTF8_STRING\0".as_ptr() as *const i8,
-                        0
-                    ),
-                    8,
-                    PropModeReplace,
-                    "fpwm\0".as_ptr() as *const u8,
-                    "fpwm\0".as_bytes().len() as i32,
+                    &mut text_property
                 );
                 Ok(())
             }
