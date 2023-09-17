@@ -117,6 +117,8 @@ impl WM {
                     self.root,
                     &mut text_property
                 );
+
+                XFlush(self.display);
                 Ok(())
             }
 
