@@ -241,12 +241,12 @@ impl WM {
 
                     }
 
-                }
+                },
                 XK_Escape => {
 
                     if e.state & Mod1Mask == Mod1Mask {RUNNING = false;}
 
-                }
+                },
                 _ => ()
 
             };
@@ -268,8 +268,8 @@ impl WM {
                 width: e.width,
                 height: e.height,
                 border_width: e.border_width,
-                sibling: 0,
-                stack_mode: 0
+                sibling: self.root,
+                stack_mode: Above
             };
 
             XConfigureWindow(
@@ -288,7 +288,7 @@ impl WM {
     fn handle_map_request(&self, e: &XMapRequestEvent) {
         unsafe {
 
-            XMapWindow(e.display, e.window);
+            XMapWindow(self.display, e.window);
 
         }
     }
