@@ -102,10 +102,23 @@ impl WM {
                 )
             }
             else {
-                XStoreName(
+                XChangeProperty(
                     self.display,
                     self.root,
-                    "fpwm\0".as_ptr() as *const i8
+                    XInternAtom(
+                        self.display,
+                        "_NET_WM_NAME\0".as_ptr() as *const i8,
+                        0
+                    ),
+                    XInternAtom(
+                        self.display, 
+                        "UTF8_STRING\0".as_ptr() as *const i8,
+                        0
+                    ),
+                    8,
+                    PropModeReplace,
+                    "fpwm\0".as_ptr() as *const u8,
+                    "fpwm\0".as_bytes().len() as i32,
                 );
                 Ok(())
             }
