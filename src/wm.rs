@@ -199,6 +199,12 @@ impl WM {
                 match e.get_type() {
 
                     KeyPress => self.handle_keypress(&e.key),
+                    MapRequest => self.handle_map_request(&e.map_request),
+                    ConfigureRequest => {
+
+                        self.handle_configure_request(&e.configure);
+                    
+                    }
                     _ => ()
 
                 };
@@ -244,6 +250,45 @@ impl WM {
                 _ => ()
 
             };
+
+        }
+    }
+
+}
+
+// Window creation, destruction, and configuration
+impl WM {
+
+    fn handle_configure_request(&self, e: &XConfigureEvent) {
+        unsafe {
+
+            let mut changes = XWindowChanges {
+                x: e.x,
+                y: e.y,
+                width: e.width,
+                height: e.height,
+                border_width: e.border_width,
+                sibling: 0,
+                stack_mode: 0
+            };
+
+            XConfigureWindow(
+                e.display,
+                e.window,
+                {
+                    CWX | CWY | CWWidth | CWHeight | CWBorderWidth | CWSibling
+                    | CWStackMode
+                } as u32,
+                &mut changes
+            );
+
+        }
+    }
+
+    fn handle_map_request(&self, e: &XMapRequestEvent) {
+        unsafe {
+
+            XMapWindow(e.display, e.window);
 
         }
     }
