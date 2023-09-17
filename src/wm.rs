@@ -263,12 +263,12 @@ impl WM {
         unsafe {
 
             let mut changes = XWindowChanges {
-                x: e.x,
-                y: e.y,
-                width: e.width,
-                height: e.height,
-                border_width: e.border_width,
-                sibling: self.root,
+                x: 0,
+                y: 0,
+                width: 1080,
+                height: 720,
+                border_width: 0,
+                sibling: 0,
                 stack_mode: Above
             };
 
