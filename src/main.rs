@@ -22,7 +22,7 @@ use wm::*;
 
 fn main() {
 
-    let wm = WM::create().unwrap();
+    let mut wm = WM::create().unwrap();
     wm.run();
 
 }

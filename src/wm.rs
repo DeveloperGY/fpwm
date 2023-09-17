@@ -35,7 +35,8 @@ impl WM {
 
         let wm = Self {
             display,
-            root
+            root,
+            currently_open: None
         };
 
         Ok(wm)
@@ -188,7 +189,7 @@ impl WM {
 // Window Manager Execution
 impl WM {
 
-    pub fn run(&self) {
+    pub fn run(&mut self) {
         unsafe {
 
             let mut e: XEvent = std::mem::zeroed();
@@ -294,13 +295,14 @@ impl WM {
         }
     }
 
-    fn handle_map_request(&self, e: &XMapRequestEvent) {
+    fn handle_map_request(&mut self, e: &XMapRequestEvent) {
         unsafe {
 
             if let Some(w) = self.currently_open {
-                XUnmapWindow(self.display, self.currently_open.unwrap());    
+                XUnmapWindow(self.display, w);    
             }
             XMapWindow(self.display, e.window);
+            self.currently_open = Some(e.window);
 
         }
     }
