@@ -150,7 +150,7 @@ impl WM {
                 keycode as i32,
                 modifiers,
                 window,
-                1,
+                0,
                 GrabModeAsync,
                 GrabModeAsync
             );
