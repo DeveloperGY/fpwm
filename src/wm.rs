@@ -4,9 +4,10 @@ use x11::xlib::*;
 use x11::keysym::*;
 use app_window::AppWindow;
 use std::collections::HashMap;
+use std::ffi::CString;
 
 
-/// The basic Error type of fpwm
+/// The Error type of fpwm
 pub type Error = &'static str;
 
 /// Used to detect if there is another window manager already running
@@ -28,16 +29,13 @@ pub struct WM {
 impl WM {
 
     pub fn create() -> Result<Self, Error> {
-
         let wm = WM::new()?;
         wm.ascend()?;
-        wm.grab_input();
+        wm.grab_input()?;
         Ok(wm)
-
     }
 
     fn new() -> Result<Self, Error> {
-
         let (display, root) = WM::retrieve_x_data()?;
 
         let wm = Self {
@@ -50,7 +48,6 @@ impl WM {
         };
 
         Ok(wm)
-
     }
 
 }
@@ -60,19 +57,16 @@ impl WM {
 
     fn retrieve_x_data() -> Result<(*mut Display, Window), Error> {
         unsafe {
-
             let display = WM::connect()?;
             let root = XDefaultRootWindow(display);
 
             Ok((display, root))
-
         }
     }
 
     /// Connects to the X server and returns the display
     fn connect() -> Result<*mut Display, Error> {
         unsafe {
-
             let display = XOpenDisplay(std::ptr::null());
 
             if display.is_null() {
@@ -81,7 +75,6 @@ impl WM {
             else {
                 Ok(display)
             }
-
         }
     }
 
@@ -92,42 +85,19 @@ impl WM {
 
     fn ascend(&self) -> Result<(), Error> {
         unsafe {
-
             self.attempt_ascension();
 
             if !CAN_ASCEND {
-                Err(
-                    "Failed to ascend fpwm, is another window manager already \
-                    running?"
-                )
+                Err("Failed to ascend fpwm, is another window manager already running?")
             }
             else {
-
-                let mut wm_name = "fpwm\0".as_ptr() as *mut i8;
-                let mut text_property = std::mem::zeroed();
-                
-                XStringListToTextProperty(
-                    &mut wm_name,
-                    1,
-                    &mut text_property
-                );
-
-                XSetWMName(
-                    self.display,
-                    self.root,
-                    &mut text_property
-                );
-
-                XFlush(self.display);
                 Ok(())
             }
-
         }
     }
 
     fn attempt_ascension(&self) {
         unsafe {
-
             XSetErrorHandler(Some(WM::handle_ascension_error));
             XSelectInput(
                 self.display,
@@ -136,19 +106,13 @@ impl WM {
             );
             XSync(self.display, 1);
             XSetErrorHandler(None);
-
         }
     }
 
-    extern "C" fn handle_ascension_error(
-        _: *mut Display,
-        e: *mut XErrorEvent
-    ) -> i32 {
+    extern "C" fn handle_ascension_error(_: *mut Display, e: *mut XErrorEvent) -> i32 {
         unsafe {
-
             if BadAccess == (*e).error_code {CAN_ASCEND = false;}
             0
-
         }
     }
 
@@ -157,25 +121,30 @@ impl WM {
 // Input Grabbing
 impl WM {
 
-    fn grab_input(&self) {
-
-        self.grab_keys();
-
+    fn grab_input(&self) -> Result<(), Error> {
+        self.grab_keys()?;
+        Ok(())
     }
 
-    fn grab_keys(&self) {
-
-        self.grab_key(self.root, "d", Mod1Mask);
-        self.grab_key(self.root, "Escape", Mod1Mask);
-        self.grab_key(self.root, "1", Mod1Mask);
-        self.grab_key(self.root, "2", Mod1Mask);
-
+    fn grab_keys(&self) -> Result<(), Error> {
+        self.grab_key(self.root, "d", Mod1Mask)?;
+        self.grab_key(self.root, "Escape", Mod1Mask)?;
+        self.grab_key(self.root, "1", Mod1Mask)?;
+        self.grab_key(self.root, "2", Mod1Mask)?;
+        self.grab_key(self.root, "3", Mod1Mask)?;
+        self.grab_key(self.root, "4", Mod1Mask)?;
+        self.grab_key(self.root, "5", Mod1Mask)?;
+        Ok(())
     }
 
-    fn grab_key(&self, window: Window, key: &str, modifiers: u32) {
+    fn grab_key(
+        &self,
+        window: Window,
+        key: &str,
+        modifiers: u32
+    ) -> Result<(), Error> {
         unsafe {
-
-            let keycode = self.keystr_to_keycode(key);
+            let keycode = self.keystr_to_keycode(key)?;
             XGrabKey(
                 self.display,
                 keycode as i32,
@@ -185,32 +154,20 @@ impl WM {
                 GrabModeAsync,
                 GrabModeAsync
             );
-
+            Ok(())
         }
     }
 
-    fn keystr_to_keycode(&self, key: &str) -> KeyCode {
+    fn keystr_to_keycode(&self, key: &str) -> Result<KeyCode, Error> {
         unsafe {
+            let keystr = match CString::new(key) {
+                Ok(s) => s,
+                Err(_) => return Err("Failed to generate keycode, invalid string!")
+            };
 
-            let keystr = self.str_to_cstring(key);
-            let keysym = XStringToKeysym(keystr.as_ptr() as *const i8);
-            XKeysymToKeycode(self.display, keysym)
-
+            let keysym = XStringToKeysym(keystr.as_ptr());
+            Ok(XKeysymToKeycode(self.display, keysym))
         }
-    }
-
-    fn str_to_cstring(&self, str: &str) -> String {
-
-        let mut c_string = str.to_string();
-
-        if !c_string.ends_with("\0") {
-
-            c_string.push('\0');
-
-        }
-
-        c_string
-
     }
 
 }
@@ -220,34 +177,20 @@ impl WM {
 
     pub fn run(&mut self) {
         unsafe {
-
             let mut e: XEvent = std::mem::zeroed();
             while RUNNING {
-
                 XNextEvent(self.display, &mut e);
 
                 #[allow(non_upper_case_globals)]
                 match e.get_type() {
-
-                    KeyPress => self.handle_keypress(&e.key),
-                    CreateNotify => self.handle_create_notify(&e.create_window),
-                    DestroyNotify => {
-
-                        self.handle_destroy_notify(&e.destroy_window);
-
-                    },
-                    MapRequest => self.handle_map_request(&e.map_request),
-                    ConfigureRequest => {
-
-                        self.handle_configure_request(&e.configure);
-                    
-                    },
+                    KeyPress         => self.handle_keypress(&e.key),
+                    CreateNotify     => self.handle_create_notify(&e.create_window),
+                    MapRequest       => self.handle_map_request(&e.map_request),
+                    DestroyNotify    => self.handle_destroy_notify(&e.destroy_window),
+                    ConfigureRequest => self.handle_configure_request(&e.configure),
                     _ => ()
-
                 };
-
             }
-
         }
     }
 
@@ -258,7 +201,6 @@ impl WM {
 
     fn handle_keypress(&mut self, e: &XKeyEvent) {
         unsafe {
-
             let keysym = XKeycodeToKeysym(
                 self.display,
                 e.keycode as u8,
@@ -267,75 +209,43 @@ impl WM {
 
             #[allow(non_upper_case_globals)]
             match keysym {
-
                 XK_d => {
-
                     if e.state & Mod1Mask == Mod1Mask {
-
                         let mut rofi = std::process::Command::new("rofi");
                         rofi.args(["-modi", "drun,run", "-show", "drun"]);
                         rofi.spawn().unwrap();
-
                     }
-
                 },
                 XK_Escape => {
-
                     if e.state & Mod1Mask == Mod1Mask {RUNNING = false;}
-
                 },
                 XK_1 => {
-
                     if e.state &Mod1Mask == Mod1Mask {
-
-                        self.current_workspace = 1;
-
-                        // turn into function call
-                        self.windows.iter_mut().for_each(|w| {
-
-                            if w.1.workspace_id == self.current_workspace {
-
-                                XMapWindow(self.display, w.1.window);
-
-                            }
-                            else {
-
-                                XUnmapWindow(self.display, w.1.window);
-
-                            }
-
-                        });
-
+                        self.switch_workspace(1);
                     }
-
                 }
                 XK_2 => {
-
                     if e.state &Mod1Mask == Mod1Mask {
-
-                        self.current_workspace = 2;
-                        self.windows.iter_mut().for_each(|w| {
-
-                            if w.1.workspace_id == self.current_workspace {
-
-                                XMapWindow(self.display, w.1.window);
-
-                            }
-                            else {
-
-                                XUnmapWindow(self.display, w.1.window);
-
-                            }
-
-                        });
-
+                        self.switch_workspace(2);
                     }
-
+                }
+                XK_3 => {
+                    if e.state &Mod1Mask == Mod1Mask {
+                        self.switch_workspace(3);
+                    }
+                }
+                XK_4 => {
+                    if e.state &Mod1Mask == Mod1Mask {
+                        self.switch_workspace(4);
+                    }
+                }
+                XK_5 => {
+                    if e.state &Mod1Mask == Mod1Mask {
+                        self.switch_workspace(5);
+                    }
                 }
                 _ => ()
-
             };
-
         }
     }
 
@@ -344,42 +254,33 @@ impl WM {
 // Window creation, destruction, and configuration
 impl WM {
 
-    fn handle_create_notify(&mut self, e: &XCreateWindowEvent) {
-        
+    fn handle_create_notify(&mut self, e: &XCreateWindowEvent) {        
         self.windows.insert(
             e.window,
             AppWindow::new(e.window, self.current_workspace)
         );
 
         if !self.workspaces.contains_key(&self.current_workspace) {
-
             self.workspaces.insert(self.current_workspace, vec![]);
-
         }
 
         // self.workspaces.get_mut(&self.current_workspace)
         //     .unwrap()
         //     .push(e.window);
-
     }
 
     fn handle_destroy_notify(&mut self, e: &XDestroyWindowEvent) {
-
         self.windows.remove(&e.window);
         
         if !self.workspaces.contains_key(&self.current_workspace) {
-
             self.workspaces.insert(self.current_workspace, vec![]);
-
         }
 
         // remove window from workspace vec
-
     }
 
     fn handle_configure_request(&self, e: &XConfigureEvent) {
         unsafe {
-
             let mut changes = XWindowChanges {
                 x: 0,
                 y: 0,
@@ -403,16 +304,33 @@ impl WM {
                 } as u32,
                 &mut changes
             );
-        
         }
     }
 
     fn handle_map_request(&mut self, e: &XMapRequestEvent) {
         unsafe {
-
             XMapWindow(self.display, e.window);
-
         }
     }
 
+}
+
+// Workspace Management
+impl WM {
+    
+    fn switch_workspace(&mut self, workspace_id: usize) {
+        unsafe {
+            self.current_workspace = workspace_id;
+            
+            self.windows.iter_mut().for_each(|w| {
+                if w.1.workspace_id == self.current_workspace {
+                    XMapWindow(self.display, w.1.window);
+                }
+                else {
+                    XUnmapWindow(self.display, w.1.window);
+                }
+            });
+        }
+    }
+    
 }
