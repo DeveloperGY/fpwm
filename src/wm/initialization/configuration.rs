@@ -33,7 +33,7 @@ fn get_local_config_path() -> Result<PathBuf, Error> {
         Err(_) =>  {
             let mut home_path = PathBuf::from(user_home);
             home_path.extend(Path::new(".config"));
-            home_path.extend(Path::new("fpwm"));
+            home_path.extend(Path::new("/fpwm"));
             home_path
         }
     };
