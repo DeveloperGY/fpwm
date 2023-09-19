@@ -11,7 +11,7 @@ impl WM {
     
     // Creates and validates window manager
     pub fn create() -> Result<Self, Error> {
-        let _config = load_config();
+        let _config = load_config()?;
         
         let wm = WM::new()?;
         wm.ascend()?;
@@ -43,7 +43,7 @@ impl WM {
             let display = XOpenDisplay(std::ptr::null());
 
             if display.is_null() {
-                Err("Failed to connect to X server, is it running?")
+                Err("Failed to connect to X server, is it running?".into())
             }
             else {
                 Ok(display)
@@ -66,7 +66,7 @@ impl WM {
             XSetErrorHandler(None);
 
             if !CAN_ASCEND {
-                Err("Failed to ascend fpwm, is another window manager already running?")
+                Err("Failed to ascend fpwm, is another window manager already running?".into())
             }
             else {
                 Ok(())
@@ -127,7 +127,7 @@ impl WM {
         unsafe {
             let keystr = match CString::new(key) {
                 Ok(s) => s,
-                Err(_) => return Err("Failed to generate keycode, invalid string!")
+                Err(_) => return Err("Failed to generate keycode, invalid string!".into())
             };
 
             let keysym = XStringToKeysym(keystr.as_ptr());

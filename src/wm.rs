@@ -7,7 +7,7 @@ use app_window::AppWindow;
 use std::collections::HashMap;
 
 /// The Error type of fpwm
-pub type Error = &'static str;
+pub type Error = String;
 
 /// Used to detect if there is another window manager already running
 pub static mut CAN_ASCEND: bool = true;

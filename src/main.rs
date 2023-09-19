@@ -10,8 +10,8 @@ mod wm;
 use wm::*;
 
 fn main() {
-
     let mut wm = WM::create().unwrap();
-    // wm.run();
-
+    wm.run();
 }
+
+// make a logger
