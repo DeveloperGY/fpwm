@@ -39,8 +39,7 @@ pub fn load_config() -> Result<Config, Error> {
 fn get_config_file() -> Result<File, Error> {
     let relative_path = Path::new("fpwm/fpwm.conf");
 
-    let fail = Err("Failed to find valid configuration file, run \"fpwm --generate\" \
-    to generate the default configuration at /etc/fpwm/fpwm.conf".into());
+    let fail = Err(r#"Failed to find valid configuration file, run "fpwm --generate" to generate the default configuration at /etc/fpwm/fpwm.conf"#.into());
 
     let mut is_local_path = true; // True if it finds one of the first two paths
     

@@ -10,7 +10,13 @@ mod wm;
 use wm::*;
 
 fn main() {
-    let mut wm = WM::create().unwrap();
+    let mut wm = match WM::create() {
+        Ok(wm) => wm,
+        Err(e) => {
+            println!("{e}");
+            return;
+        }
+    };
     wm.run();
 }
 
