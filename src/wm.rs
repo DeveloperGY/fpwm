@@ -1,11 +1,10 @@
 mod app_window;
+mod initialization;
 
 use x11::xlib::*;
 use x11::keysym::*;
 use app_window::AppWindow;
 use std::collections::HashMap;
-use std::ffi::CString;
-
 
 /// The Error type of fpwm
 pub type Error = &'static str;
@@ -23,153 +22,6 @@ pub struct WM {
     
     current_workspace: usize,
     windows: HashMap<Window, AppWindow>,
-    workspaces: HashMap<usize, Vec<Window>>
-}
-
-impl WM {
-
-    pub fn create() -> Result<Self, Error> {
-        let wm = WM::new()?;
-        wm.ascend()?;
-        wm.grab_input()?;
-        Ok(wm)
-    }
-
-    fn new() -> Result<Self, Error> {
-        let (display, root) = WM::retrieve_x_data()?;
-
-        let wm = Self {
-            display,
-            root,
-            
-            current_workspace: 1,
-            windows: HashMap::new(),
-            workspaces: HashMap::new()
-        };
-
-        Ok(wm)
-    }
-
-}
-
-// Window Manager Creation
-impl WM {
-
-    fn retrieve_x_data() -> Result<(*mut Display, Window), Error> {
-        unsafe {
-            let display = WM::connect()?;
-            let root = XDefaultRootWindow(display);
-
-            Ok((display, root))
-        }
-    }
-
-    /// Connects to the X server and returns the display
-    fn connect() -> Result<*mut Display, Error> {
-        unsafe {
-            let display = XOpenDisplay(std::ptr::null());
-
-            if display.is_null() {
-                Err("Failed to connect to X server, is it running?")
-            }
-            else {
-                Ok(display)
-            }
-        }
-    }
-
-}
-
-// Window Manager Initialization
-impl WM {
-
-    fn ascend(&self) -> Result<(), Error> {
-        unsafe {
-            self.attempt_ascension();
-
-            if !CAN_ASCEND {
-                Err("Failed to ascend fpwm, is another window manager already running?")
-            }
-            else {
-                Ok(())
-            }
-        }
-    }
-
-    fn attempt_ascension(&self) {
-        unsafe {
-            XSetErrorHandler(Some(WM::handle_ascension_error));
-            XSelectInput(
-                self.display,
-                self.root,
-                SubstructureNotifyMask | SubstructureRedirectMask
-            );
-            XSync(self.display, 1);
-            XSetErrorHandler(None);
-        }
-    }
-
-    extern "C" fn handle_ascension_error(_: *mut Display, e: *mut XErrorEvent) -> i32 {
-        unsafe {
-            if BadAccess == (*e).error_code {CAN_ASCEND = false;}
-            0
-        }
-    }
-
-}
-
-// Input Grabbing
-impl WM {
-
-    fn grab_input(&self) -> Result<(), Error> {
-        self.grab_keys()?;
-        Ok(())
-    }
-
-    fn grab_keys(&self) -> Result<(), Error> {
-        self.grab_key(self.root, "d", Mod1Mask)?;
-        self.grab_key(self.root, "Escape", Mod1Mask)?;
-        self.grab_key(self.root, "1", Mod1Mask)?;
-        self.grab_key(self.root, "2", Mod1Mask)?;
-        self.grab_key(self.root, "3", Mod1Mask)?;
-        self.grab_key(self.root, "4", Mod1Mask)?;
-        self.grab_key(self.root, "5", Mod1Mask)?;
-        Ok(())
-    }
-
-    fn grab_key(
-        &self,
-        window: Window,
-        key: &str,
-        modifiers: u32
-    ) -> Result<(), Error> {
-        unsafe {
-            let keycode = self.keystr_to_keycode(key)?;
-            XGrabKey(
-                self.display,
-                keycode as i32,
-                modifiers,
-                window,
-                0,
-                GrabModeAsync,
-                GrabModeAsync
-            );
-            Ok(())
-        }
-    }
-
-    fn keystr_to_keycode(&self, key: &str) -> Result<KeyCode, Error> {
-        unsafe {
-            let keystr = match CString::new(key) {
-                Ok(s) => s,
-                Err(_) => return Err("Failed to generate keycode, invalid string!")
-            };
-
-            let keysym = XStringToKeysym(keystr.as_ptr());
-            Ok(XKeysymToKeycode(self.display, keysym))
-        }
-    }
-
 }
 
 // Window Manager Execution
@@ -259,24 +111,10 @@ impl WM {
             e.window,
             AppWindow::new(e.window, self.current_workspace)
         );
-
-        if !self.workspaces.contains_key(&self.current_workspace) {
-            self.workspaces.insert(self.current_workspace, vec![]);
-        }
-
-        // self.workspaces.get_mut(&self.current_workspace)
-        //     .unwrap()
-        //     .push(e.window);
     }
 
     fn handle_destroy_notify(&mut self, e: &XDestroyWindowEvent) {
         self.windows.remove(&e.window);
-        
-        if !self.workspaces.contains_key(&self.current_workspace) {
-            self.workspaces.insert(self.current_workspace, vec![]);
-        }
-
-        // remove window from workspace vec
     }
 
     fn handle_configure_request(&self, e: &XConfigureEvent) {
