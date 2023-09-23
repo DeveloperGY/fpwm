@@ -2,6 +2,7 @@ mod configuration;
 
 use super::{WM, Error, CAN_ASCEND};
 use configuration::load_config;
+pub use configuration::{Config, Keybind};
 use x11::xlib::*;
 use std::collections::HashMap;
 use std::ffi::CString;
@@ -11,20 +12,22 @@ impl WM {
     
     // Creates and validates window manager
     pub fn create() -> Result<Self, Error> {
-        let _config = load_config()?;
+        let config = load_config()?;
         
-        let wm = WM::new()?;
+        let wm = WM::new(config)?;
         wm.ascend()?;
-        wm.grab_input()?; // TODO: Replace with configuration
+        wm.grab_input()?;
         Ok(wm)
     }
 
     /// Creates an instance of an [`WM`]
-    fn new() -> Result<Self, Error> {
+    fn new(config: Config) -> Result<Self, Error> {
         let display = WM::connect()?;
         let root = unsafe {XDefaultRootWindow(display)};
 
         let wm = Self {
+            config,
+
             display,
             root,
             
@@ -92,13 +95,9 @@ impl WM {
     }
 
     fn grab_keys(&self) -> Result<(), Error> {
-        self.grab_key(self.root, "d", Mod1Mask)?;
-        self.grab_key(self.root, "Escape", Mod1Mask)?;
-        self.grab_key(self.root, "1", Mod1Mask)?;
-        self.grab_key(self.root, "2", Mod1Mask)?;
-        self.grab_key(self.root, "3", Mod1Mask)?;
-        self.grab_key(self.root, "4", Mod1Mask)?;
-        self.grab_key(self.root, "5", Mod1Mask)?;
+        for keybind in &self.config.keybinds {
+            self.grab_key(self.root, &keybind.key, keybind.modifiers)?;
+        }
         Ok(())
     }
 

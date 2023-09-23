@@ -1,10 +1,12 @@
 mod config;
+mod keybind;
 
 use super::super::Error;
 use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::io::Read;
-use config::Config;
+pub use config::Config;
+pub use keybind::Keybind;
 
 /// Loads the fpwm configuration
 ///

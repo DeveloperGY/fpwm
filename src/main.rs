@@ -20,4 +20,4 @@ fn main() {
     wm.run();
 }
 
-// make a logger
+// make a logger (store log in /var/log/fpwm.log)

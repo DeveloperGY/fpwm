@@ -2,9 +2,11 @@ mod app_window;
 mod initialization;
 
 use x11::xlib::*;
-use x11::keysym::*;
 use app_window::AppWindow;
 use std::collections::HashMap;
+use std::process::Command;
+use std::ffi::CString;
+use initialization::{Config, Keybind};
 
 /// The Error type of fpwm
 pub type Error = String;
@@ -17,6 +19,8 @@ pub static mut RUNNING: bool = true;
 
 
 pub struct WM {
+    config: Config,
+
     display: *mut Display,
     root: Window,
     
@@ -53,54 +57,52 @@ impl WM {
 
     fn handle_keypress(&mut self, e: &XKeyEvent) {
         unsafe {
-            let keysym = XKeycodeToKeysym(
+            let event_keysym = XKeycodeToKeysym(
                 self.display,
                 e.keycode as u8,
                 0
-            ) as u32;
+            );
 
-            #[allow(non_upper_case_globals)]
-            match keysym {
-                XK_d => {
-                    if e.state & Mod1Mask == Mod1Mask {
-                        let mut rofi = std::process::Command::new("rofi");
-                        rofi.args(["-modi", "drun,run", "-show", "drun"]);
-                        rofi.spawn().unwrap();
-                    }
-                },
-                XK_Escape => {
-                    if e.state & Mod1Mask == Mod1Mask {RUNNING = false;}
-                },
-                XK_1 => {
-                    if e.state &Mod1Mask == Mod1Mask {
-                        self.switch_workspace(1);
-                    }
+            for keybind in &self.config.keybinds {
+                let keybind_cstring = CString::new(keybind.key.clone()).unwrap();
+                let keybind_keysym = XStringToKeysym(keybind_cstring.as_ptr());
+
+                let matches_keysym = event_keysym == keybind_keysym;
+                let matches_modifiers = e.state & keybind.modifiers == keybind.modifiers;
+
+                let matches_keybind = matches_keysym && matches_modifiers;
+
+                if matches_keybind {
+                    self.run_command(keybind);
+                    break;
                 }
-                XK_2 => {
-                    if e.state &Mod1Mask == Mod1Mask {
-                        self.switch_workspace(2);
-                    }
-                }
-                XK_3 => {
-                    if e.state &Mod1Mask == Mod1Mask {
-                        self.switch_workspace(3);
-                    }
-                }
-                XK_4 => {
-                    if e.state &Mod1Mask == Mod1Mask {
-                        self.switch_workspace(4);
-                    }
-                }
-                XK_5 => {
-                    if e.state &Mod1Mask == Mod1Mask {
-                        self.switch_workspace(5);
-                    }
-                }
-                _ => ()
-            };
+            }
         }
     }
 
+    fn run_command(&mut self, keybind: &Keybind) {
+        let command = keybind.command.as_str();
+
+        let words = keybind.command
+            .split_whitespace()
+            .collect::<Vec<_>>();
+
+        match words[0] {
+            "exit" => {
+                unsafe {RUNNING = false};
+            }
+            "exec" => {
+                let mut command = Command::new(words[1]);
+                command.args(&words[1..]);
+                let _child = command.spawn().unwrap();
+                // add child to child process tracker
+            },
+            "ws" => {
+                self.switch_workspace(words[1].parse().unwrap());
+            }
+            _ => () 
+        };
+}
 }
 
 // Window creation, destruction, and configuration
