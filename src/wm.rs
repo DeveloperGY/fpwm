@@ -140,13 +140,16 @@ impl WM {
                 let mut window = 0;
                 let mut state = 0;
 
-                unsafe {XGetInputFocus(self.display, &mut window, &mut state)};
+                unsafe {
+                    XGetInputFocus(self.display, &mut window, &mut state);
+                    XFlush(self.display);
+                }
 
                 if window != self.root {
                     unsafe {
-                        XUnmapWindow(self.display, window);
                         if let Some(app_window) = self.windows.get_mut(&window) {
                             app_window.workspace_id = workspace_id;
+                            XUnmapWindow(self.display, app_window.window);
                         }
                     }
                 }
