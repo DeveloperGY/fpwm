@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use std::process::Command;
 use std::ffi::CString;
 use initialization::{Config, Keybind};
-use std::cell::RefCell;
 
 /// The Error type of fpwm
 pub type Error = String;

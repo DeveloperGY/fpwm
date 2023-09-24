@@ -21,7 +21,7 @@ impl Config {
     pub fn parse(config_str: &str) -> Result<Self, Error> {
         let mut config = Config::default();
 
-        let mut line_number: usize = 0;
+        let mut line_number: usize = 1;
 
         for line in config_str.lines().collect::<Vec<_>>() {
             let line = line.trim();
