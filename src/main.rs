@@ -9,7 +9,7 @@ use wm_logger::WMLogger;
 use wm::WM;
 
 fn main() {
-    let log_path = PathBuf::from("/var/fpwm.log");
+    let log_path = PathBuf::from("/var/log/fpwm.log");
     let wm_logger = match WMLogger::new(&log_path) {
         Ok(l) => l,
         Err(msg) => {
