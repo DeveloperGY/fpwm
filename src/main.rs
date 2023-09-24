@@ -10,7 +10,7 @@ use wm::WM;
 
 fn main() {
     let mut log_path = PathBuf::from(std::env::var("HOME").unwrap());
-    log_path.extend(Path::new("/.fpwm/fpwm.log"));
+    log_path.extend(Path::new(".fpwm/fpwm.log"));
 
     let wm_logger = match WMLogger::new(&log_path) {
         Ok(l) => l,
