@@ -2,14 +2,16 @@ mod logger;
 mod wm_logger;
 mod wm;
 
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 
 use logger::{Logger, LogVariant, Log};
 use wm_logger::WMLogger;
 use wm::WM;
 
 fn main() {
-    let log_path = PathBuf::from("~/.fpwm/fpwm.log");
+    let mut log_path = PathBuf::from(std::env::var("HOME").unwrap());
+    log_path.extend(Path::new("/.fpwm/fpwm.log"));
+
     let wm_logger = match WMLogger::new(&log_path) {
         Ok(l) => l,
         Err(msg) => {
