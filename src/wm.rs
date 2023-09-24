@@ -71,7 +71,7 @@ impl WM {
                 let keybind_keysym = XStringToKeysym(keybind_cstring.as_ptr());
 
                 let matches_keysym = event_keysym == keybind_keysym;
-                let matches_modifiers = e.state & keybind.modifiers == keybind.modifiers;
+                let matches_modifiers = e.state ^ keybind.modifiers == keybind.modifiers;
 
                 let matches_keybind = matches_keysym && matches_modifiers;
 
