@@ -108,7 +108,7 @@ impl Config {
 
 impl Config {
     /// takes in a variable identifier and returns its value
-    fn get_var(&self, var: &str) -> Result<String, Error> {
+    pub fn get_var(&self, var: &str) -> Result<String, Error> {
         let name = if var.starts_with('$') {
             var.strip_prefix('$').unwrap()
         }

@@ -103,14 +103,57 @@ impl WM {
                 let mut command = Command::new(words[1]);
                 command.args(&words[1..]);
                 let _child = command.spawn().unwrap();
-                // add child to child process tracker
+                // TODO: add child to child process tracker unless its meant to be seperate
             },
-            "ws" => {
-                self.switch_workspace(words[1].parse().unwrap());
+            "workspace" => {
+                let workspace_id = match self.config.get_var(words[1]) {
+                    Ok(id) => {
+                        match id.as_str().parse() {
+                            Ok(value) => value,
+                            Err(_) => {
+                                return; // TODO: return error for logger
+                            }
+                        }
+                    },
+                    Err(_) => {
+                        return; // TODO: return error for logger
+                    }
+                };
+
+                self.switch_workspace(workspace_id);
+            }
+            "move" => {
+                let workspace_id: usize = match self.config.get_var(words[1]) {
+                    Ok(id) => {
+                        match id.as_str().parse() {
+                            Ok(value) => value,
+                            Err(_) => {
+                                return; // TODO: return error for logger
+                            }
+                        }
+                    },
+                    Err(_) => {
+                        return; // TODO: return error for logger
+                    }
+                };
+
+                let mut window = 0;
+                let mut state = 0;
+
+                unsafe {XGetInputFocus(self.display, &mut window, &mut state)};
+
+                if window != self.root {
+                    unsafe {
+                        XUnmapWindow(self.display, window);
+                        if let Some(app_window) = self.windows.get_mut(&window) {
+                            app_window.workspace_id = workspace_id;
+                        }
+                    }
+                }
             }
             _ => () 
         };
-}
+    }
 }
 
 // Window creation, destruction, and configuration
