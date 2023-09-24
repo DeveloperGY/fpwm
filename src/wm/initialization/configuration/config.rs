@@ -113,7 +113,7 @@ impl Config {
             var.strip_prefix('$').unwrap()
         }
         else {
-            var
+            return Ok(var.to_string())
         };
         
         match self.vars.get(name) {
