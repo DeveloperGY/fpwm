@@ -137,6 +137,7 @@ impl Config {
         let mut has_main_key = false;
         let mut main_key = String::new();
         let mut modifier = 0;
+        let mut has_shift = false;
 
         for key in &expanded_keys {
             if key.len() == 1 { // chnage to handle multi character keys like Esc
@@ -155,7 +156,10 @@ impl Config {
                     "mod3"             => Mod3Mask,
                     "mod4"             => Mod4Mask,
                     "mod5"             => Mod5Mask,
-                    "shift"            => ShiftMask,
+                    "shift"            => {
+                        has_shift = true;
+                        ShiftMask
+                    },
                     "ctrl" | "control" => ControlMask,
                     k => { // Catching any key that is more than 1 character Ex: Escape
                         if has_main_key { // Error out if there is already a main key
@@ -187,6 +191,12 @@ impl Config {
             Err("Invalid Keybind".into())
         }
         else {
+            let key_len = main_key.chars().collect::<Vec<_>>().len();
+
+            if has_shift && key_len == 1 {
+                main_key = main_key.to_uppercase()
+            }
+
             Ok((main_key, modifier))
         }
     }
