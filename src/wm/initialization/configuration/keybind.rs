@@ -1,4 +1,4 @@
-#[derive(Hash, Eq)]
+#[derive(Hash, Eq, Clone)]
 pub struct Keybind {
     pub key: String,
     pub modifiers: u32,

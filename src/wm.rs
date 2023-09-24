@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::process::Command;
 use std::ffi::CString;
 use initialization::{Config, Keybind};
+use std::cell::RefCell;
 
 /// The Error type of fpwm
 pub type Error = String;
@@ -55,13 +56,16 @@ impl WM {
 // Handle Key Presses
 impl WM {
 
-    fn handle_keypress(&mut self, e: &XKeyEvent) {
+    fn handle_keypress(&mut self, e: &XKeyEvent) { // TODO: refactor to make more understandable
         unsafe {
             let event_keysym = XKeycodeToKeysym(
                 self.display,
                 e.keycode as u8,
                 0
             );
+
+            let mut keybind_found = false;
+            let mut selected_keybind = Keybind::new("", 0, ""); // will be overridden if match is found
 
             for keybind in &self.config.keybinds {
                 let keybind_cstring = CString::new(keybind.key.clone()).unwrap();
@@ -73,9 +77,14 @@ impl WM {
                 let matches_keybind = matches_keysym && matches_modifiers;
 
                 if matches_keybind {
-                    self.run_command(keybind);
+                    keybind_found = true;
+                    selected_keybind = keybind.clone();
                     break;
                 }
+            }
+
+            if keybind_found {
+                self.run_command(&selected_keybind);
             }
         }
     }
@@ -83,7 +92,7 @@ impl WM {
     fn run_command(&mut self, keybind: &Keybind) {
         let command = keybind.command.as_str();
 
-        let words = keybind.command
+        let words = command
             .split_whitespace()
             .collect::<Vec<_>>();
 
