@@ -1,23 +1,22 @@
-// Flying Parrot Window Manager
-// 
-// Author: DeveloperGY
-// License: GPL3
-// 
-// fpwm is a basic X11 window manager written in rust
-
+mod logger;
+mod wm_logger;
 mod wm;
 
-use wm::*;
+use std::path::PathBuf;
+
+use logger::{Logger, LogVariant, Log};
+use wm_logger::WMLogger;
+use wm::WM;
 
 fn main() {
-    let mut wm = match WM::create() {
-        Ok(wm) => wm,
-        Err(e) => {
-            println!("{e}");
-            return;
+    let log_path = PathBuf::from("/var/fpwm.log");
+    let wm_logger = match WMLogger::new(&log_path) {
+        Ok(l) => l,
+        Err(msg) => {
+            panic!("Failed to create logger: {msg}");
         }
     };
-    wm.run();
-}
 
-// make a logger (store log in /var/log/fpwm.log)
+    let mut fpwm = WM::new(Box::new(wm_logger));
+    fpwm.test();
+}
