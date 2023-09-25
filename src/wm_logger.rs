@@ -23,7 +23,7 @@ impl WMLogger {
             Ok(f)
         }
         else {
-            Err("Failed to open log file".into())
+            Err("failed to open log file".into())
         }
     }
 }
